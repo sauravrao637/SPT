@@ -1,4 +1,4 @@
-export const SPT_Address = "0x91786b0C51399550aDf9769971F134c7965C63fb"
+export const SPT_Address = "0x8D38f6210Ca47875BaECF5AAf2CE9DCBf0a7f4A3"
 
 export const SPT_ABI = [
 	{
@@ -213,6 +213,20 @@ export const SPT_ABI = [
 				"internalType": "bool",
 				"name": "",
 				"type": "bool"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function",
+		"constant": true
+	},
+	{
+		"inputs": [],
+		"name": "myName",
+		"outputs": [
+			{
+				"internalType": "string",
+				"name": "name",
+				"type": "string"
 			}
 		],
 		"stateMutability": "view",

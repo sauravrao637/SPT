@@ -7,19 +7,21 @@ class SolahParchiThapGame extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      contract: null,
+      // contract: null,
+      // account: '',
       players: [],
-      currentPlayer: '',
+      // currentPlayer: '',
       playerParchi: [],
       playerName: '',
-      parchiIndex: '',
-      gameInProgress: false,
+      // parchiIndex: '',
+      // gameInProgress: false,
     };
   }
 
   async componentDidMount() {
     await this.loadWeb3();
     await this.loadContract();
+    await this.fetchGameState();
   }
 
   async loadWeb3() {
@@ -35,17 +37,96 @@ class SolahParchiThapGame extends Component {
       // Update the state with the selected account
       this.setState({ account: selectedAccount });
 
-      await this.fetchGameState();
     } else {
       window.alert("Please install MetaMask to use this application!");
     }
   }
 
+  processedEventIds = [];
 
   async loadContract() {
     const web3 = window.web3;
     const contract = new web3.eth.Contract(SPT_ABI, SPT_Address);
     this.setState({ contract });
+
+    contract.events.PlayerEntered({}, (error, event) => {
+      if (error) {
+        console.error('Error listening to PlayerEntered event:', error);
+        return;
+      } else {
+        const eventId = event.id;
+
+        // Check if the event ID has already been processed
+        if (this.processedEventIds.includes(eventId)) {
+          // Event has already been processed, skip further handling
+          return;
+        }
+        this.processedEventIds.push(eventId);
+        const name = event.returnValues.name;
+        console.log('PlayerEntered: event', name);
+        this.setState(prevState => ({
+          players: [...prevState.players, name] // Add the new name to the players array
+        }));
+      }
+    });
+
+    contract.events.GameStarted({}, (error, event) => {
+      if (error) {
+        console.error('Error listening to GameStarted event:', error);
+        return;
+      }
+      const eventId = event.id;
+
+      // Check if the event ID has already been processed
+      if (this.processedEventIds.includes(eventId)) {
+        // Event has already been processed, skip further handling
+        return;
+      }
+      this.processedEventIds.push(eventId);
+      console.log('GameStarted event');
+      this.fetchGameState();
+
+    });
+
+    contract.events.Turn({}, (error, event) => {
+      if (error) {
+        console.error('Error listening to Turn event:', error);
+        return;
+      }
+      const name = event.returnValues.name;
+      console.log('Turn event:', name);
+      this.state.currentPlayer = name;
+    });
+
+    contract.events.ParchiTransfer({}, (error, event) => {
+      if (error) {
+        console.error('Error listening to ParchiTransfer event:', error);
+        return;
+      }
+
+      console.log('ParchiTransfer event:', event.returnValues.from, event.returnValues.to);
+
+    });
+
+    contract.events.PlayerWon({}, (error, event) => {
+      if (error) {
+        console.error('Error listening to PlayerWon event:', error);
+        return;
+      }
+
+      console.log('PlayerWon event:', event.returnValues.name);
+    });
+
+    contract.events.GameOver({}, (error, event) => {
+      if (error) {
+        console.error('Error listening to GameOver event:', error);
+        return;
+      }
+
+      console.log('GameOver event');
+      this.fetchGameState();
+    });
+
   }
 
   async fetchGameState() {
@@ -57,18 +138,33 @@ class SolahParchiThapGame extends Component {
     const turn = await contract.methods.turn().call();
     const gameInProgress = turn != 4
     var currentPlayer;
-    try {
-      currentPlayer = await contract.methods.getTurn().call();
-    } catch (error) {
-      console.error(error)
-      currentPlayer = 'Start Game'
+    if (gameInProgress) {
+      try {
+        currentPlayer = await contract.methods.getTurn().call();
+      } catch (error) {
+        console.error(error)
+
+      }
+      try {
+        const playerParchi = await contract.methods
+          .showParchi()
+          .call({ from: window.ethereum.selectedAddress });
+        this.setState({ playerParchi })
+      } catch (error) {
+        console.error(error)
+      }
     }
 
-    const playerParchi = await contract.methods
-      .showParchi()
-      .call({ from: window.ethereum.selectedAddress });
-    console.log(gameInProgress)
-    this.setState({ players, currentPlayer, playerParchi, gameInProgress });
+    try {
+      const playerName = await contract.methods.myName().call({ from: window.ethereum.selectedAddress });
+      this.setState({ playerName: playerName });
+      console.log(playerName)
+    } catch (error) {
+      console.error(error);
+    }
+
+    console.log("gameInProgress?", gameInProgress, "playerName", this.state.playerName)
+    this.setState({ players, currentPlayer, gameInProgress });
   }
 
 
@@ -79,7 +175,6 @@ class SolahParchiThapGame extends Component {
         await contract.methods.enterPool(playerName).send({
           from: window.ethereum.selectedAddress,
         });
-        await this.fetchGameState();
       } catch (error) {
         console.error('Error joining the game:', error);
       }
@@ -95,7 +190,6 @@ class SolahParchiThapGame extends Component {
       console.error(error);
       // Handle error during game start
     }
-    this.fetchGameState()
   };
 
 
@@ -120,17 +214,18 @@ class SolahParchiThapGame extends Component {
         await contract.methods.claimWin().send({
           from: window.ethereum.selectedAddress,
         });
-        await this.fetchGameState();
       } catch (error) {
         console.error('Error claiming win:', error);
       }
     }
   };
 
-  isPlayerInPool = async () => {
-    const result = await this.contract.methods.amIinPool();
-
-    return result;
+  isPlayerInPool = () => {
+    const { players, playerName } = this.state;
+    for (let i = 0; i < players.length; i++) {
+      if (playerName == players[i]) return true;
+    }
+    return false;
   };
 
   render() {
@@ -143,7 +238,8 @@ class SolahParchiThapGame extends Component {
       gameInProgress
     } = this.state;
 
-    const isPlayerInPool = true
+    const isPlayerInPool = this.isPlayerInPool();
+
     const isPoolFull = players.length === 4;
     console.log({ isPlayerInPool, isPoolFull })
 
@@ -156,7 +252,7 @@ class SolahParchiThapGame extends Component {
             <li key={index}>{player}</li>
           ))}
         </ul>
-        <h2>Current Player: {currentPlayer}</h2>
+        {gameInProgress && <h2>Current Player: {currentPlayer}</h2>}
         <h2>Your Parchi Tokens:</h2>
         <ul>
           {playerParchi.map((parchi, index) => (
@@ -164,7 +260,7 @@ class SolahParchiThapGame extends Component {
           ))}
         </ul>
         {
-          players && players.length < 4 &&
+          players && players.length < 4 && !isPlayerInPool &&
           <div>
             <h3>Join the Game:</h3>
             <input
@@ -178,22 +274,33 @@ class SolahParchiThapGame extends Component {
             <button onClick={this.joinGame}>Join</button>
           </div>
         }
-        <div>
-          <h3>Pass a Parchi Token:</h3>
-          <input
-            type="number"
-            value={parchiIndex}
-            onChange={(e) =>
-              this.setState({ parchiIndex: e.target.value })
+        {
+          gameInProgress &&
+          <div>
+            {
+              currentPlayer == playerName
+              &&
+              <div>
+                <h3>Pass a Parchi Token:</h3>
+                <input
+                  type="number"
+                  value={parchiIndex}
+                  onChange={(e) =>
+                    this.setState({ parchiIndex: e.target.value })
+                  }
+                  placeholder="Enter parchi index"
+                />
+                <button onClick={this.passParchi}>Pass</button>
+              </div>
+
             }
-            placeholder="Enter parchi index"
-          />
-          <button onClick={this.passParchi}>Pass</button>
-        </div>
-        <div>
-          <h3>Claim Win:</h3>
-          <button onClick={this.claimWin}>Claim Win</button>
-        </div>
+            <div>
+              <h3>Claim Win:</h3>
+              <button onClick={this.claimWin}>Claim Win</button>
+            </div>
+          </div>
+        }
+
 
         {gameInProgress ? (
           <h1>Game in progress</h1>

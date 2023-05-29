@@ -191,6 +191,15 @@ contract SolahParchiThap{
         return false;
     }
     
+    function myName() public view onlyPlayers returns(string memory name){
+        name = "";
+        for(uint i=0; i<pool.length; i++){
+            if (msg.sender == pool[i].walletAdd) {
+                name = pool[i].name;
+                break;
+            }
+        }
+    }
 
     function getTurn() public view returns(string memory name) {
         require(turn!=4, "Start Game");
