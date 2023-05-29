@@ -244,72 +244,72 @@ class SolahParchiThapGame extends Component {
     console.log({ isPlayerInPool, isPoolFull })
 
     return (
-      <div>
-        <h1>SolahParchiThap Game</h1>
-        <h2>Players:</h2>
-        <ul>
-          {players.map((player, index) => (
-            <li key={index}>{player}</li>
-          ))}
-        </ul>
+      <div className="container">
+        <h1 className="title">SolahParchiThap Game</h1>
+
+        <div className="players-section">
+          <h2>Players:</h2>
+          <ul className="players-list">
+            {players.map((player, index) => (
+              <li key={index}>{player}</li>
+            ))}
+          </ul>
+        </div>
+
         {gameInProgress && <h2>Current Player: {currentPlayer}</h2>}
-        <h2>Your Parchi Tokens:</h2>
-        <ul>
-          {playerParchi.map((parchi, index) => (
-            <li key={index}>{parchi}</li>
-          ))}
-        </ul>
-        {
-          players && players.length < 4 && !isPlayerInPool &&
-          <div>
+
+        <div className="parchi-tokens-section">
+          <h2>Your Parchi Tokens:</h2>
+          <div className="game-grid">
+            {playerParchi.map((number, index) => (
+              <div className="grid-item" key={index}>
+
+                <img src={`images\\image-${Math.floor(number / 4)}.png`} alt={`Image ${number}`} />
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {!isPlayerInPool && players.length < 4 && (
+          <div className="join-game-section">
             <h3>Join the Game:</h3>
             <input
               type="text"
               value={playerName}
-              onChange={(e) =>
-                this.setState({ playerName: e.target.value })
-              }
+              onChange={(e) => this.setState({ playerName: e.target.value })}
               placeholder="Enter your name"
             />
             <button onClick={this.joinGame}>Join</button>
           </div>
-        }
-        {
-          gameInProgress &&
-          <div>
-            {
-              currentPlayer == playerName
-              &&
-              <div>
-                <h3>Pass a Parchi Token:</h3>
-                <input
-                  type="number"
-                  value={parchiIndex}
-                  onChange={(e) =>
-                    this.setState({ parchiIndex: e.target.value })
-                  }
-                  placeholder="Enter parchi index"
-                />
-                <button onClick={this.passParchi}>Pass</button>
-              </div>
-
-            }
-            <div>
-              <h3>Claim Win:</h3>
-              <button onClick={this.claimWin}>Claim Win</button>
-            </div>
-          </div>
-        }
-
-
-        {gameInProgress ? (
-          <h1>Game in progress</h1>
-        ) : isPlayerInPool && isPoolFull ? (
-          <button onClick={this.startGame}>Start Game</button>
-        ) : (
-          <h1>Waiting for players to join...</h1>
         )}
 
+        {gameInProgress && currentPlayer === playerName && (
+          <div className="pass-parchi-section">
+            <h3>Pass a Parchi Token:</h3>
+            <input
+              type="number"
+              value={parchiIndex}
+              onChange={(e) => this.setState({ parchiIndex: e.target.value })}
+              placeholder="Enter parchi index"
+            />
+            <button onClick={this.passParchi}>Pass</button>
+          </div>
+        )}
+
+        {gameInProgress && (
+          <div className="claim-win-section">
+            <h3>Claim Win:</h3>
+            <button onClick={this.claimWin}>Claim Win</button>
+          </div>
+        )}
+
+        {gameInProgress ? (
+          <h2 className="game-status">Game in progress</h2>
+        ) : isPlayerInPool && players.length === 4 ? (
+          <button onClick={this.startGame}>Start Game</button>
+        ) : (
+          <h2 className="game-status">Waiting for players to join...</h2>
+        )}
       </div>
     );
   }

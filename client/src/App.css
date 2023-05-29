@@ -1,0 +1,76 @@
+.container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.title {
+  text-align: center;
+  color: #333;
+}
+
+.players-section,
+.parchi-tokens-section,
+.join-game-section,
+.pass-parchi-section,
+.claim-win-section {
+  margin-bottom: 20px;
+}
+
+.players-list,
+.parchi-tokens-list {
+  list-style: none;
+  padding: 0;
+}
+
+.players-list li,
+.parchi-tokens-list li {
+  margin-bottom: 5px;
+}
+
+.join-game-section,
+.pass-parchi-section,
+.claim-win-section {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.game-status {
+  text-align: center;
+}
+
+.container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.title {
+  text-align: center;
+  color: #333;
+}
+
+.game-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+}
+
+.grid-item {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: #f1f1f1;
+  border-radius: 8px;
+  padding: 10px;
+}
+
+.grid-item img {
+  max-width: 100%;
+  height: auto;
+}
+
+
+/* Add more styles as needed */
