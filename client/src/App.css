@@ -17,13 +17,19 @@
   margin-bottom: 20px;
 }
 
-.players-list,
+.players-list{
+  display: flex;
+  list-style-type: none;
+  padding: 0;
+}
 .parchi-tokens-list {
   list-style: none;
   padding: 0;
 }
 
-.players-list li,
+.players-list li{
+  margin-right: 10px;
+}
 .parchi-tokens-list li {
   margin-bottom: 5px;
 }
