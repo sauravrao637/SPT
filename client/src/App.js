@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React, { Component, useEffect } from 'react';
 import Web3 from 'web3';
 import './App.css';
 import { SPT_ABI, SPT_Address } from './config';
@@ -7,8 +7,8 @@ class SolahParchiThapGame extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      // contract: null,
-      // account: '',
+      contract: null,
+      account: null,
       players: [],
       // currentPlayer: '',
       playerParchi: [],
@@ -25,10 +25,27 @@ class SolahParchiThapGame extends Component {
     await this.fetchGameState();
   }
 
+  setupMetamaskListeners = async () => {
+    if (window.ethereum && window.ethereum.isMetaMask) {
+      window.ethereum.on('accountsChanged', this.handleAccountsChanged);
+
+      const accounts = await window.ethereum.request({ method: 'eth_accounts' });
+      this.setState({ selectedAddress: accounts[0] || '' });
+    }
+  };
+
+  handleAccountsChanged = async (accounts) => {
+    console.log("changed", window.ethereum.selectedAddress);
+    await this.fetchGameState();
+    this.setState({ selectedAddress: window.ethereum.selectedAddress || '' });
+    // Call your function or perform any actions here
+  };
+
   async loadWeb3() {
     if (window.ethereum) {
       window.web3 = new Web3(window.ethereum);
       await window.ethereum.enable();
+
       const web3 = window.web3;
 
       // Get the current selected account
@@ -37,6 +54,8 @@ class SolahParchiThapGame extends Component {
 
       // Update the state with the selected account
       this.setState({ account: selectedAccount });
+
+      this.setupMetamaskListeners();
 
     } else {
       window.alert("Please install MetaMask to use this application!");
@@ -163,7 +182,6 @@ class SolahParchiThapGame extends Component {
         currentPlayer = await contract.methods.getTurn().call();
       } catch (error) {
         console.error(error)
-
       }
       try {
         const playerParchi = await contract.methods
@@ -181,6 +199,7 @@ class SolahParchiThapGame extends Component {
       console.log(playerName)
     } catch (error) {
       console.error(error);
+      this.setState({ playerName: '' });
     }
 
     console.log("gameInProgress?", gameInProgress, "playerName", this.state.playerName)
@@ -194,6 +213,7 @@ class SolahParchiThapGame extends Component {
       try {
         await contract.methods.enterPool(playerName).send({
           from: window.ethereum.selectedAddress,
+          value: 10000
         });
       } catch (error) {
         console.error('Error joining the game:', error);
@@ -242,14 +262,26 @@ class SolahParchiThapGame extends Component {
     }
   };
 
-  isPlayerInPool = () => {
-    const { players, playerName } = this.state;
+  isPlayerInPool = (players, playerName) => {
     for (let i = 0; i < players.length; i++) {
-      if (playerName == players[i]) return true;
+      if (playerName == players[i]) {
+        return true;
+      }
     }
     return false;
   };
 
+  forceEnd = async () => {
+    console.log("Forced Ending")
+    const { contract } = this.state;
+    if (!contract) return;
+    try {
+      await contract.methods.forceEndGame().send({ from: window.ethereum.selectedAddress })
+      this.fetchGameState();
+    } catch (error) {
+      console.log(error)
+    }
+  }
   render() {
     const {
       players,
@@ -258,95 +290,102 @@ class SolahParchiThapGame extends Component {
       playerName,
       gameInProgress,
       playerWon,
-      gameOver
+      gameOver,
     } = this.state;
 
-    const isPlayerInPool = this.isPlayerInPool();
 
-    const isPoolFull = players.length === 4;
-    console.log({ isPlayerInPool, isPoolFull })
+    console.log("playerINPool? :", this.isPlayerInPool(players, playerName))
+    console.log("pool size: ", players.length)
 
     return (
-      <div className="container">
-        {
-          gameOver && (
-            <div style={{ textAlign: 'center', marginTop: '20px' }}>
-              <h2 style={{ fontSize: '24px', fontWeight: 'bold' }}>
-                Winner is {playerWon}
-              </h2>
-              <img
-                src="https://png.pngtree.com/png-clipart/20200224/original/pngtree-gold-medal-vector-metal-realistic-first-placement-achievement-round-medal-with-png-image_5222293.jpg"
-                alt="Winner"
-                style={{ maxWidth: '200px', marginTop: '10px' }}
-              />
-            </div>
-          )
-        }
+      <div>
 
         {
-          !gameOver &&
-          <div>
-            <h1 className="title">SolahParchiThap Game</h1>
-
-            <div className="players-section">
-              <h2>Pool:</h2>
-              <ul className="players-list">
-                {players.map((player, index) => (
-                  <li key={index}>{player}</li>
-                ))}
-              </ul>
-            </div>
-
-            {gameInProgress && <h2>Current Turn: {currentPlayer}</h2>}
-
-            {isPlayerInPool && <div className="parchi-tokens-section">
-              <h2>Your Parchi Tokens:</h2>
-              <div className="game-grid">
-                {playerParchi.map((number, index) => (
-                  <div className="grid-item" key={index}>
-                    <img
-                      src={`images\\image-${Math.floor(number / 4)}.png`}
-                      alt={`Image ${number}`}
-                      onClick={() => {
-                        this.passParchi(index)
-                      }}
-                    />
-                  </div>
-                ))}
-              </div>
-            </div>
+          this.state.account &&
+          <div className="container">
+            {
+              gameOver && playerWon != '' && (
+                <div style={{ textAlign: 'center', marginTop: '20px' }}>
+                  <h2 style={{ fontSize: '24px', fontWeight: 'bold' }}>
+                    Winner is {playerWon}
+                  </h2>
+                  <img
+                    src="https://png.pngtree.com/png-clipart/20200224/original/pngtree-gold-medal-vector-metal-realistic-first-placement-achievement-round-medal-with-png-image_5222293.jpg"
+                    alt="Winner"
+                    style={{ maxWidth: '200px', marginTop: '10px' }}
+                  />
+                </div>
+              )
             }
 
-            {!isPlayerInPool && players.length < 4 && (
-              <div className="join-game-section">
-                <h3>Join the Game:</h3>
-                <input
-                  type="text"
-                  value={playerName}
-                  onChange={(e) => this.setState({ playerName: e.target.value })}
-                  placeholder="Enter your name"
-                />
-                <button onClick={this.joinGame}>Join</button>
-              </div>
-            )}
+            {
+              (!gameOver || playerWon === '') &&
+              <div>
+                <h1 className="title">SolahParchiThap Game</h1>
 
-            {gameInProgress && (
-              <div className="claim-win-section">
-                <h3>Claim Win:</h3>
-                <button onClick={this.claimWin}>Claim Win</button>
-              </div>
-            )}
+                <div className="players-section">
+                  <h2>Pool:</h2>
+                  <ul className="players-list">
+                    {players.map((player, index) => (
+                      <li key={index}>{player}</li>
+                    ))}
+                  </ul>
+                </div>
 
-            {gameInProgress ? (
-              <h2 className="game-status">Game in progress</h2>
-            ) : isPlayerInPool && players.length === 4 ? (
-              <button onClick={this.startGame}>Start Game</button>
-            ) : (
-              <h2 className="game-status">Waiting for players to join...</h2>
-            )
+                {gameInProgress && <h2>Current Turn: {currentPlayer}</h2>}
+
+                {this.isPlayerInPool(players, playerName) && <div className="parchi-tokens-section">
+                  <h2>Your Parchi Tokens:</h2>
+                  <div className="game-grid">
+                    {playerParchi.map((number, index) => (
+                      <div className="grid-item" key={index}>
+                        <img
+                          src={`images\\image-${Math.floor(number / 4)}.png`}
+                          alt={`Image ${number}`}
+                          onClick={() => {
+                            this.passParchi(index)
+                          }}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                }
+
+                {!this.isPlayerInPool(players, playerName) && players.length < 4 && (
+                  <div className="join-game-section">
+                    <h3>Join the Game:</h3>
+                    <input
+                      type="text"
+                      value={playerName}
+                      onChange={(e) => this.setState({ playerName: e.target.value })}
+                      placeholder="Enter your name"
+                    />
+                    <button onClick={this.joinGame}>Join</button>
+                  </div>
+                )}
+
+                {gameInProgress && (
+                  <div className="claim-win-section">
+                    <h3>Claim Win:</h3>
+                    <button onClick={this.claimWin}>Claim Win</button>
+                  </div>
+                )}
+
+                {gameInProgress ? (
+                  <h2 className="game-status">Game in progress</h2>
+                ) : this.isPlayerInPool(players, playerName) && players.length === 4 ? (
+                  <button onClick={this.startGame}>Start Game</button>
+                ) : (
+                  <h2 className="game-status">Waiting for players to join...</h2>
+                )
+                }
+                <div>
+                  <button onClick={this.forceEnd}>Force End</button>
+                </div>
+              </div>
             }
           </div>
-
         }
       </div>
     );

@@ -1,27 +1,29 @@
 // SPDX-License-Identifier: GPL-3.0-only
 // Author:- @sauravrao637
+// https://sepolia.etherscan.io/address/0xb4ffbaa78ae83c1f6775e8f0652c3a5c343d750b
+// 0xb4ffbaa78ae83c1f6775e8f0652c3a5c343d750b
 pragma solidity ^0.8.10;
 
 
 contract SolahParchiThap{
+    address payable public owner;
 
-    uint[] public parchiya = [1,1,1,1,2,2,2,2,3,3,3,3,4,4,4,4];
-    address public owner;
-
-    uint public turn = 4;
+    uint8 public turn = 4;
     bool win = false;
+    uint256 entryFee = 10000 wei;
     
     struct Player{
-        address walletAdd;
+        address payable walletAdd;
         string name;
         uint[] myParchi;
     }
 
-    Player[] private pool;
+    uint8 private totalPlayers = 0;
+    Player[4] private pool;
 
     function getPool() public view returns(string[] memory){
-        string[] memory players = new string[](pool.length);
-        for (uint i = 0; i < pool.length; i++) {
+        string[] memory players = new string[](totalPlayers);
+        for (uint i = 0; i < totalPlayers; i++) {
             players[i] = pool[i].name;
         }
         return players;
@@ -36,12 +38,17 @@ contract SolahParchiThap{
     event GameOver();
 
     constructor() {
-        owner = msg.sender;
+        owner = payable(msg.sender);
+    }
+
+    modifier onlyOwner(){
+        require(msg.sender == owner, "Not the owner");
+        _;
     }
     
     modifier onlyPlayers(){
         bool isPlayer = false;
-        for(uint i=0; i<pool.length; i++){
+        for(uint i=0; i<totalPlayers; i++){
             if (msg.sender == pool[i].walletAdd) {
                 isPlayer = true;
                 break;
@@ -50,23 +57,31 @@ contract SolahParchiThap{
         require(isPlayer, "Not a player");
         _;
     }
+
+    function getStringLength(string memory str) public pure returns (uint256) {
+        bytes memory strBytes = bytes(str);
+        return strBytes.length;
+    }
     
-    function enterPool(string memory name) public {
+    function enterPool(string memory name) payable public {
         // Check of the pool has space
-        require(pool.length < 4, "Pool is full");
+        require(totalPlayers < 4, "Pool is full");
+        require(getStringLength(name) <10, "Name too big");
+        require(msg.value == entryFee, "Entry fee should be 10000 wei");
 
         // Check the player is not already in pool
-        for(uint i=0; i<pool.length; i++){
+        for(uint i=0; i<totalPlayers; i++){
             require(keccak256(abi.encodePacked(name)) != keccak256(abi.encodePacked(pool[i].name)), "IGN already in use");
             require(msg.sender != pool[i].walletAdd, "Player already in pool");
         }
 
-        Player memory newPlayer = Player(msg.sender, name, new uint[](0));
-        pool.push(newPlayer);
+        Player memory newPlayer = Player(payable(msg.sender), name, new uint[](0));
+        pool[totalPlayers] = newPlayer;
+        totalPlayers+=1;
         emit PlayerEntered(name);
     }
 
-    function shuffleArrayUint(uint[] memory arr) internal view {
+    function shuffleArrayUint(uint[] memory arr) private view {
         uint n = arr.length;
         for (uint i = 0; i < n; i++) {
             uint256 randIndex = i + uint256(keccak256(abi.encodePacked(block.timestamp, block.difficulty, i))) % (n - i);
@@ -103,7 +118,7 @@ contract SolahParchiThap{
     }
 
     function startGame() public onlyPlayers {
-        require(pool.length == 4, "Pool not full");
+        require(totalPlayers == 4, "Pool not full");
         require(turn == 4, "Game is already in progress");
         shuffleAndDistribute();
         // Set turn to first player
@@ -112,7 +127,7 @@ contract SolahParchiThap{
         emit Turn(pool[turn].name);
     }
 
-    function getNext() private view returns(uint) {
+    function getNext() private view returns(uint8) {
         return (turn+1)%4;
     }
 
@@ -127,7 +142,7 @@ contract SolahParchiThap{
     }
 
     function recieveParchi(uint parchiIndex) private onlyPlayers{
-        uint n = getNext();
+        uint8 n = getNext();
         pool[n].myParchi.push(parchiIndex);
         turn = n;
         emit Turn(pool[n].name);
@@ -163,13 +178,15 @@ contract SolahParchiThap{
         win = true;
         winner = pool[turn].name;
         emit PlayerWon(winner);
+        pool[turn].walletAdd.transfer(3*entryFee);
+        owner.transfer(entryFee);
         endGame();
     } 
 
-    function endGame() public onlyPlayers{
+    function endGame() private{
         win = false;
         turn = 4;
-        delete pool;
+        totalPlayers = 0;
         emit GameOver();
     }
 
@@ -183,7 +200,7 @@ contract SolahParchiThap{
     }
 
     function amIinPool() public view returns(bool){
-        for(uint i=0; i<pool.length; i++){
+        for(uint i=0; i<totalPlayers; i++){
             if (msg.sender == pool[i].walletAdd) {
                 return true;
             }
@@ -193,7 +210,7 @@ contract SolahParchiThap{
     
     function myName() public view onlyPlayers returns(string memory name){
         name = "";
-        for(uint i=0; i<pool.length; i++){
+        for(uint i=0; i<totalPlayers; i++){
             if (msg.sender == pool[i].walletAdd) {
                 name = pool[i].name;
                 break;
@@ -204,6 +221,10 @@ contract SolahParchiThap{
     function getTurn() public view returns(string memory name) {
         require(turn!=4, "Start Game");
         name = pool[turn].name;
+    }
+
+    function forceEndGame() public onlyOwner {
+        endGame();
     }
 }
 

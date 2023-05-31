@@ -1,4 +1,4 @@
-export const SPT_Address = "0x8D38f6210Ca47875BaECF5AAf2CE9DCBf0a7f4A3"
+export const SPT_Address = "0x2E2cCd031895802a605BF7C9A3BF1b12c2Dcb83b"
 
 export const SPT_ABI = [
 	{
@@ -81,29 +81,9 @@ export const SPT_ABI = [
 		"name": "owner",
 		"outputs": [
 			{
-				"internalType": "address",
+				"internalType": "address payable",
 				"name": "",
 				"type": "address"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function",
-		"constant": true
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "uint256",
-				"name": "",
-				"type": "uint256"
-			}
-		],
-		"name": "parchiya",
-		"outputs": [
-			{
-				"internalType": "uint256",
-				"name": "",
-				"type": "uint256"
 			}
 		],
 		"stateMutability": "view",
@@ -115,9 +95,9 @@ export const SPT_ABI = [
 		"name": "turn",
 		"outputs": [
 			{
-				"internalType": "uint256",
+				"internalType": "uint8",
 				"name": "",
-				"type": "uint256"
+				"type": "uint8"
 			}
 		],
 		"stateMutability": "view",
@@ -142,14 +122,35 @@ export const SPT_ABI = [
 		"inputs": [
 			{
 				"internalType": "string",
+				"name": "str",
+				"type": "string"
+			}
+		],
+		"name": "getStringLength",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "pure",
+		"type": "function",
+		"constant": true
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "string",
 				"name": "name",
 				"type": "string"
 			}
 		],
 		"name": "enterPool",
 		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
+		"stateMutability": "payable",
+		"type": "function",
+		"payable": true
 	},
 	{
 		"inputs": [],
@@ -246,5 +247,12 @@ export const SPT_ABI = [
 		"stateMutability": "view",
 		"type": "function",
 		"constant": true
+	},
+	{
+		"inputs": [],
+		"name": "forceEndGame",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
 	}
 ]
