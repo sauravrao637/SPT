@@ -1,4 +1,4 @@
-export const SPT_Address = "0x2E2cCd031895802a605BF7C9A3BF1b12c2Dcb83b"
+export const SPT_Address = "0xb4ffbaa78ae83c1f6775e8f0652c3a5c343d750b"
 
 export const SPT_ABI = [
 	{
