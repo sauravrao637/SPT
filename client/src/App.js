@@ -1,4 +1,4 @@
-import React, { Component, useEffect } from 'react';
+import React, { Component } from 'react';
 import Web3 from 'web3';
 import './App.css';
 import { SPT_ABI, SPT_Address } from './config';
@@ -10,7 +10,7 @@ class SolahParchiThapGame extends Component {
       contract: null,
       account: null,
       players: [],
-      // currentPlayer: '',
+      currentPlayer: '',
       playerParchi: [],
       playerName: '',
       // gameInProgress: false,
@@ -103,7 +103,7 @@ class SolahParchiThapGame extends Component {
       this.setState(prevState => ({
         players: [...prevState.players, name] // Add the new name to the players array
       }));
-
+      this.fetchGameState();
     });
 
     contract.events.GameStarted({}, (error, event) => {
@@ -129,8 +129,7 @@ class SolahParchiThapGame extends Component {
 
       const name = event.returnValues.name;
       console.log('Turn event:', name);
-      this.state.currentPlayer = name;
-
+      this.setState({ currentPlayer: name })
     });
 
     contract.events.ParchiTransfer({}, (error, event) => {
