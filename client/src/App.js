@@ -15,7 +15,8 @@ class SolahParchiThapGame extends Component {
       playerName: '',
       // gameInProgress: false,
       playerWon: '',
-      gameOver: false
+      gameOver: false,
+      amIinPool: false
     };
   }
 
@@ -183,20 +184,25 @@ class SolahParchiThapGame extends Component {
     const turn = await contract.methods.turn().call();
     const gameInProgress = turn != 4
     var currentPlayer;
-    if (gameInProgress) {
-      try {
-        currentPlayer = await contract.methods.getTurn().call();
-      } catch (error) {
-        console.error(error)
-      }
-      try {
-        const playerParchi = await contract.methods
-          .showParchi()
-          .call({ from: window.ethereum.selectedAddress });
-        this.setState({ playerParchi })
-      } catch (error) {
-        console.error(error)
-      }
+    try {
+      currentPlayer = await contract.methods.getTurn().call();
+    } catch (error) {
+      console.error(error)
+    }
+    try {
+      const playerParchi = await contract.methods
+        .showParchi()
+        .call({ from: window.ethereum.selectedAddress });
+      this.setState({ playerParchi })
+    } catch (error) {
+      console.error(error)
+    }
+    try {
+      const amIinPool = await contract.methods.amIinPool().call({ from: window.ethereum.selectedAddress })
+      this.setState({ amIinPool });
+    } catch (error) {
+      console.error(error)
+      this.setState({ amIinPool: false });
     }
 
     try {
@@ -207,7 +213,6 @@ class SolahParchiThapGame extends Component {
       console.error(error);
       this.setState({ playerName: '' });
     }
-
     console.log("gameInProgress?", gameInProgress, "playerName", this.state.playerName)
     this.setState({ players, currentPlayer, gameInProgress });
   }
@@ -276,16 +281,16 @@ class SolahParchiThapGame extends Component {
     }
   };
 
-  isPlayerInPool = (players, playerName) => {
-    console.log("isPlayerInPool(_, _) called", players, playerName);
+  // isPlayerInPool = (players, playerName) => {
+  //   console.log("isPlayerInPool(_, _) called", players, playerName);
 
-    for (let i = 0; i < players.length; i++) {
-      if (playerName === players[i]) {
-        return true;
-      }
-    }
-    return false;
-  };
+  //   for (let i = 0; i < players.length; i++) {
+  //     if (playerName === players[i]) {
+  //       return true;
+  //     }
+  //   }
+  //   return false;
+  // };
 
   forceEnd = async () => {
     console.log("forceEnd() called");
@@ -310,10 +315,11 @@ class SolahParchiThapGame extends Component {
       gameInProgress,
       playerWon,
       gameOver,
+      amIinPool
     } = this.state;
 
 
-    console.log("playerINPool? :", this.isPlayerInPool(players, playerName))
+    console.log("playerINPool? :", amIinPool)
     console.log("pool size: ", players.length)
 
     return (
@@ -352,7 +358,7 @@ class SolahParchiThapGame extends Component {
 
                 {gameInProgress && <h2>Current Turn: {currentPlayer}</h2>}
 
-                {this.isPlayerInPool(players, playerName) && <div className="parchi-tokens-section">
+                {amIinPool && <div className="parchi-tokens-section">
                   <h2>Your Parchi Tokens:</h2>
                   <div className="game-grid">
                     {playerParchi.map((number, index) => (
@@ -370,7 +376,7 @@ class SolahParchiThapGame extends Component {
                 </div>
                 }
 
-                {!this.isPlayerInPool(players, playerName) && players.length < 4 && (
+                {!amIinPool && players.length < 4 && (
                   <div className="join-game-section">
                     <h3>Join the Game:</h3>
                     <input
@@ -392,7 +398,7 @@ class SolahParchiThapGame extends Component {
 
                 {gameInProgress ? (
                   <h2 className="game-status">Game in progress</h2>
-                ) : this.isPlayerInPool(players, playerName) && players.length === 4 ? (
+                ) : amIinPool && players.length === 4 ? (
                   <button onClick={this.startGame}>Start Game</button>
                 ) : (
                   <h2 className="game-status">Waiting for players to join...</h2>
