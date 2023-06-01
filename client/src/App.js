@@ -264,7 +264,7 @@ class SolahParchiThapGame extends Component {
 
   isPlayerInPool = (players, playerName) => {
     for (let i = 0; i < players.length; i++) {
-      if (playerName == players[i]) {
+      if (playerName === players[i]) {
         return true;
       }
     }
@@ -304,7 +304,7 @@ class SolahParchiThapGame extends Component {
           this.state.account &&
           <div className="container">
             {
-              gameOver && playerWon != '' && (
+              gameOver && playerWon !== '' && (
                 <div style={{ textAlign: 'center', marginTop: '20px' }}>
                   <h2 style={{ fontSize: '24px', fontWeight: 'bold' }}>
                     Winner is {playerWon}
