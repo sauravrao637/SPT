@@ -20,43 +20,41 @@ class SolahParchiThapGame extends Component {
   }
 
   async componentDidMount() {
+    console.log("ComponentDidMount() called");
+
     await this.loadWeb3();
     await this.loadContract();
     await this.fetchGameState();
   }
 
   setupMetamaskListeners = async () => {
+    console.log("setupMetamaskListeners() called");
+
     if (window.ethereum && window.ethereum.isMetaMask) {
       window.ethereum.on('accountsChanged', this.handleAccountsChanged);
 
       const accounts = await window.ethereum.request({ method: 'eth_accounts' });
-      this.setState({ selectedAddress: accounts[0] || '' });
+      this.setState({ account: window.ethereum.selectedAddress || '' });
     }
   };
 
   handleAccountsChanged = async (accounts) => {
-    console.log("changed", window.ethereum.selectedAddress);
+    console.log("hanleAccountChangeCalled(_)", window.ethereum.selectedAddress);
+    this.setState({ account: window.ethereum.selectedAddress || '' });
     await this.fetchGameState();
-    this.setState({ selectedAddress: window.ethereum.selectedAddress || '' });
-    // Call your function or perform any actions here
   };
 
   async loadWeb3() {
+    console.log("loadWeb3() called");
+
     if (window.ethereum) {
       window.web3 = new Web3(window.ethereum);
       await window.ethereum.enable();
 
       const web3 = window.web3;
 
-      // Get the current selected account
-      const accounts = await web3.eth.getAccounts();
-      const selectedAccount = accounts[0];
-
-      // Update the state with the selected account
-      this.setState({ account: selectedAccount });
-
-      this.setupMetamaskListeners();
-
+      this.setState({ account: window.ethereum.selectedAddress || '' });
+      await this.setupMetamaskListeners();
     } else {
       window.alert("Please install MetaMask to use this application!");
     }
@@ -65,6 +63,8 @@ class SolahParchiThapGame extends Component {
   processedEventIds = [];
 
   shouldProcessEvent = (eventId) => {
+    console.log("shouldProcessEvent(_) called", eventId);
+
     if (this.processedEventIds.includes(eventId)) {
       return false;
     }
@@ -76,6 +76,8 @@ class SolahParchiThapGame extends Component {
   }
 
   async loadContract() {
+    console.log("loadContract() called");
+
     const web3 = window.web3;
     const contract = new web3.eth.Contract(SPT_ABI, SPT_Address);
     this.setState({ contract });
@@ -83,6 +85,8 @@ class SolahParchiThapGame extends Component {
   }
 
   attachEventListeners = () => {
+    console.log("attachEventListener() called");
+
     const { contract } = this.state;
     if (!contract) return;
     contract.events.PlayerEntered({}, (error, event) => {
@@ -169,6 +173,8 @@ class SolahParchiThapGame extends Component {
   }
 
   async fetchGameState() {
+    console.log("fetchGameState() called");
+
     const { contract } = this.state;
     if (!contract) return;
 
@@ -208,6 +214,8 @@ class SolahParchiThapGame extends Component {
 
 
   joinGame = async () => {
+    console.log("joinGame() called");
+
     const { contract, playerName } = this.state;
     if (contract && playerName) {
       try {
@@ -222,6 +230,8 @@ class SolahParchiThapGame extends Component {
   };
 
   startGame = async () => {
+    console.log("startGame() called");
+
     const { contract, } = this.state;
     try {
       await contract.methods.startGame().send({ from: window.ethereum.selectedAddress });
@@ -234,6 +244,8 @@ class SolahParchiThapGame extends Component {
 
 
   passParchi = async (parchiIndex) => {
+    console.log("passParchi() called");
+
     const { contract } = this.state;
     console.log("Passing parchi with index", parchiIndex)
     if (!contract) {
@@ -250,6 +262,8 @@ class SolahParchiThapGame extends Component {
   };
 
   claimWin = async () => {
+    console.log("claimWin() called");
+
     const { contract } = this.state;
     if (contract) {
       try {
@@ -263,6 +277,8 @@ class SolahParchiThapGame extends Component {
   };
 
   isPlayerInPool = (players, playerName) => {
+    console.log("isPlayerInPool(_, _) called", players, playerName);
+
     for (let i = 0; i < players.length; i++) {
       if (playerName === players[i]) {
         return true;
@@ -272,7 +288,8 @@ class SolahParchiThapGame extends Component {
   };
 
   forceEnd = async () => {
-    console.log("Forced Ending")
+    console.log("forceEnd() called");
+
     const { contract } = this.state;
     if (!contract) return;
     try {
@@ -283,6 +300,8 @@ class SolahParchiThapGame extends Component {
     }
   }
   render() {
+    console.log("render() called");
+
     const {
       players,
       currentPlayer,
@@ -299,7 +318,6 @@ class SolahParchiThapGame extends Component {
 
     return (
       <div>
-
         {
           this.state.account &&
           <div className="container">

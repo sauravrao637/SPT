@@ -1,5 +1,8 @@
 export const SPT_Address = "0xb4ffbaa78ae83c1f6775e8f0652c3a5c343d750b"
 
+// for ganache
+// export const SPT_Address = "0xFb7599e93b91c2Af192D2dF86154B2ac6D64b434"
+
 export const SPT_ABI = [
 	{
 		"inputs": [],
