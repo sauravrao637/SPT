@@ -7,7 +7,7 @@ This repository contains the smart contract code for the SPT game, along with a 
 
 ## Smart Contract
 
-The smart contract code is written in Solidity, a programming language specifically designed for smart contracts on the Ethereum platform. It defines the game rules, player interactions, and manages the game state. The smart contract is deployed on the Sepolia testnet.
+The smart contract code is written in Solidity, a programming language specifically designed for smart contracts on the Ethereum platform. It defines the game rules, player interactions, and manages the game state. The smart contract is deployed on the Sepolia testnet at address [0xb4ffbaa78ae83c1f6775e8f0652c3a5c343d750b](https://sepolia.etherscan.io/address/0xb4ffbaa78ae83c1f6775e8f0652c3a5c343d750b).
 
 ## Frontend
 
